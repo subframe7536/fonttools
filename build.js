@@ -103,7 +103,6 @@ loadPyodide({ packageCacheDir })
                   .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'false')
                   .replace('typeof importScripts == "function" && typeof self == "object"', 'false')
                   .replace('typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false'),
-                // .replace(/let f.*pyodide.asm.js`;[\s\S]*await F\(f\);/, 'await import("./pyodide.node.asm.js");'),
                 map: null,
               }
             }
@@ -126,11 +125,9 @@ loadPyodide({ packageCacheDir })
                 code: code
                   .replace('typeof Deno', 'undefined')
                   .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
-                  .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'true')
-                  .replace('typeof importScripts == "function" && typeof self == "object"', 'false')
+                  .replaceAll('await import(', 'await import(/*@vite-ignore*/')
                   .replace(/c\(\w+, "node[^"]+"\);/g, '')
-                  .replace(/c\(.*, "loadScript"\);/g, '()=>{}')
-                  .replace(/let f.*pyodide.asm.js`;[\s\S]*await F\(f\);/, 'await import("./pyodide.web.asm.js");'),
+                  .replace('pyodide.asm.js', 'pyodide.web.asm.js'),
                 map: null,
               }
             }
@@ -143,6 +140,7 @@ loadPyodide({ packageCacheDir })
       entry: {
         'pyodide.web.asm': './node_modules/pyodide/pyodide.asm.js',
       },
+      dts: false,
       external: ['ws'],
       plugins: [
         {
@@ -156,16 +154,17 @@ loadPyodide({ packageCacheDir })
                   .replace(/require\("[^"]+"\)/g, '{}')
                   .replace(/await import\("node:[^"]+"\)/g, '{}')
                   .replace(/await import\("ws"\)/g, '{}')
-                  .replace('typeof window == "object"', 'true')
-                  .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'true')
-                  .replace('typeof importScripts == "function"', 'false')
+                  // .replace('typeof window == "object"', 'true')
+                  // .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'true')
+                  // .replace('typeof importScripts == "function"', 'false')
                   .replace('typeof Deno < "u"', 'false')
                   .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string"', 'false')
-                  .replace('typeof importScripts == "function" && typeof self == "object", _r = typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false')
+                  .replaceAll('await import(', 'await import(/*@vite-ignore*/')
+                  // .replace('typeof importScripts == "function" && typeof self == "object", _r = typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false')
                   .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
                   .replace('throw new Error("Cannot determine runtime environment");', '{}')
-                  .replace(/\s*\w*\(\w+, "node[^"]+"\);/g, '')
-                  .replace(/\s*\w*\(.*, "loadScript"\);/g, '(false){}'),
+                  .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
+                  .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}'),
                 map: null,
               }
             }

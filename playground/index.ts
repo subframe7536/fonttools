@@ -1,4 +1,5 @@
-/* eslint-disable antfu/no-import-dist */
+// import { generateBasicScript, handleFontBuffer } from '../src/utils'
+// import { loadInBrowser } from '../src/web'
 import { generateBasicScript, handleFontBuffer } from '../dist/utils'
 import { loadInBrowser } from '../dist/web'
 import src from './test.ttf'
