@@ -3,7 +3,7 @@ import type { LoadInNodeOption } from './types'
 import { loadPyodide } from 'pyodide'
 
 /**
- * Load `fonttools` in `node`, default package cache dir is `.`
+ * Load `fonttools` in `node`
  */
 export async function loadInNode(
   options: LoadInNodeOption = {},

@@ -2,20 +2,41 @@
   "name": "@subframe7536/fonttools",
   "type": "module",
   "version": "0.0.0",
-  "description": "`fonttools` for nodejs or web using `pyodide`",
+  "description": "[ESM only] fonttools for nodejs or web powered by pyodide, compatible with Vite",
   "author": "subframe7536",
   "license": "MIT",
   "repository": "https://github.com/subframe7536/fonttools",
   "bugs": "https://github.com/subframe7536/fonttools/issues",
   "keywords": [
-    "typescript"
+    "fonttools",
+    "pyodide",
+    "font"
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js"
     }
   },
   "module": "dist/index.js",
+  "typesVersions": {
+    "*": {
+      "web": [
+        "./dist/web.d.ts"
+      ],
+      "utils": [
+        "./dist/utils.d.ts"
+      ]
+    }
+  },
   "files": [
     "dist"
   ],
