@@ -5,10 +5,13 @@ import { build } from 'tsup'
 const packageCacheDir = './cache'
 const versionInfoPath = `${packageCacheDir}/PYODIDE_VERSION`
 
-function cpAssets(name, transform, newName = name) {
+function cpAssetsWithTransform(name, transform, newName = name) {
   const data = fs.readFileSync(`./node_modules/pyodide/${name}`, 'utf-8')
   const content = transform ? transform(data) : data
   fs.writeFileSync(`./dist/${newName}`, content)
+}
+function cpAssets(name, newName = name) {
+  fs.cpSync(`./node_modules/pyodide/${name}`, `./dist/${newName}`)
 }
 
 function cpCachedWhl(fileNames) {
@@ -55,37 +58,26 @@ loadPyodide({ packageCacheDir })
 
     cpCachedWhl(files)
     cpAssets('pyodide.asm.wasm')
-    // cpAssets('pyodide.asm.js')
-    // cpAssets(
-    //   'pyodide.asm.js',
-    //   data => data
-    //     .replace(/require\("[^"]+"\)/g, '{}')
-    //     .replace(/await import\("node:[^"]+"\)/g, '{}')
-    //     .replace(/await import\("ws"\)/g, '{}')
-    //     .replace(/await import\(/g, 'await import(/* @vite-ignore */')
-    //     .replace('typeof window=="object"', 'false')
-    //     .replace('typeof importScripts=="function"', 'false')
-    //     .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"', 'false')
-    //     .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"&&!process.browser', 'false'),
-    //   'pyodide.web.asm.js',
-    // )
-    cpAssets(
+    cpAssets('python_stdlib.zip')
+    cpAssetsWithTransform(
       'pyodide.asm.js',
       data => data
         .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"', 'true')
         .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"&&!process.browser', 'true'),
     )
-    cpAssets('pyodide-lock.json', (data) => {
-      const json = JSON.parse(data)
-      return JSON.stringify({
-        ...json,
-        packages: {
-          brotli: json.packages.brotli,
-          fonttools: json.packages.fonttools,
-        },
-      })
-    })
-    cpAssets('python_stdlib.zip')
+    cpAssetsWithTransform(
+      'pyodide-lock.json',
+      (data) => {
+        const json = JSON.parse(data)
+        return JSON.stringify({
+          ...json,
+          packages: {
+            brotli: json.packages.brotli,
+            fonttools: json.packages.fonttools,
+          },
+        })
+      },
+    )
     await build({
       ...commonConfig,
       entry: [
