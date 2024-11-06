@@ -37,6 +37,7 @@ loadPyodide({ packageCacheDir })
       console.log('Version changed, recaching...')
       fs.rmdirSync(packageCacheDir, { recursive: true })
     }
+    console.log('target `pyodide` version:', api.version)
     return api
   })
   .then(async api => (await api.loadPackage('brotli'), api))

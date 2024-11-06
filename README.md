@@ -4,6 +4,8 @@
 
 Under development, breaking changes expected. Use at your own risk
 
+- `pyodide` version: `0.26.3`
+
 ### Install
 
 ```shell
