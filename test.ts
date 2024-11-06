@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs'
-// import { loadInNode } from './src'
-// import { generateBasicScript, handleFontBuffer } from './src/utils'
-import { loadInNode } from './dist'
-import { generateBasicScript, handleFontBuffer } from './dist/utils'
+import { loadInNode } from './src'
+import { generateBasicScript, handleFontBuffer } from './src/utils'
+// import { loadInNode } from './dist'
+// import { generateBasicScript, handleFontBuffer } from './dist/utils'
 
 const buf = new Uint8Array(readFileSync('./test.ttf'))
 

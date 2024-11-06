@@ -1,15 +1,14 @@
-import type { loadPyodide, PyodideInterface } from 'pyodide'
+import type { loadPyodide } from 'pyodide'
 
-export type BasePackageOption = {
+export type LoadOption = Omit<
+  Exclude<Parameters<typeof loadPyodide>[0], undefined>,
+  'packages'
+> & {
   /**
-   * Load brotli to build `woff2` format
+   * Whether to load `brotli` package to handle `woff2` format
    */
   woff2?: boolean
-  /**
-   * Options to pass to `pyodide.loadPackage`
-   */
-  loadOptions?: Parameters<PyodideInterface['loadPackage']>[1]
 }
-export type LoadInNodeOption = BasePackageOption & Pick<Exclude<Parameters<typeof loadPyodide>[0], undefined>, 'packageCacheDir'>
+export type LoadInWebOption = Omit<LoadOption, 'packageCacheDir'>
 
-export type LoadInWebOption = BasePackageOption & Pick<Exclude<Parameters<typeof loadPyodide>[0], undefined>, 'indexURL'>
+export type LoadInNodeOption = Omit<LoadOption, 'indexURL'>
