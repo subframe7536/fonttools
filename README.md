@@ -25,7 +25,7 @@ pnpm add @subframe7536/fonttools
 ```ts
 import { readFileSync, writeFileSync } from 'node:fs'
 import { loadInNode } from '@subframe7536/fonttools'
-import { generateBasicScript, handleFontBuffer } from '@subframe7536/fonttools/utils'
+import { generateBasicScript, handleFontBuffer, processNameScriptUtil } from '@subframe7536/fonttools/utils'
 
 const buf = new Uint8Array(readFileSync('./test.ttf'))
 
@@ -34,10 +34,7 @@ loadInNode({ woff2: true })
     const data = await handleFontBuffer(
       py,
       buf,
-      generateBasicScript(`
-def set_font_name(font: TTFont, name: str, id: int):
-    font["name"].setName(name, nameID=id, platformID=1, platEncID=0, langID=0x0)
-    font["name"].setName(name, nameID=id, platformID=3, platEncID=1, langID=0x409)
+      generateBasicScript(`${processNameScriptUtil}
 set_font_name(font, 'Test', 1)
 `)
     )
