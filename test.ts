@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { loadInNode } from './src'
-import { generateBasicScript, handleFontBuffer } from './src/utils'
+import { generateBasicScript, handleFontBuffer, processNameUtilScript } from './src/utils'
 // import { loadInNode } from './dist'
 // import { generateBasicScript, handleFontBuffer } from './dist/utils'
 
@@ -8,9 +8,7 @@ const buf = new Uint8Array(readFileSync('./test.ttf'))
 
 loadInNode({ packageCacheDir: './cache', woff2: true })
   .then(async py => (await handleFontBuffer(py, buf, generateBasicScript(`
-def set_font_name(font: TTFont, name: str, id: int):
-    font["name"].setName(name, nameID=id, platformID=1, platEncID=0, langID=0x0)
-    font["name"].setName(name, nameID=id, platformID=3, platEncID=1, langID=0x409)
+${processNameUtilScript}
 set_font_name(font, 'Test', 1)
 `)), py))
   .then(py => handleFontBuffer(py, buf, (input, output) => `from fontTools.ttLib.woff2 import compress
