@@ -1,10 +1,10 @@
 import { readFileSync, writeFileSync } from 'node:fs'
-import { loadInNode } from './src'
-import { generateBasicScript, handleFontBuffer, processNameUtilScript } from './src/utils'
-// import { loadInNode } from './dist'
-// import { generateBasicScript, handleFontBuffer } from './dist/utils'
+// import { loadInNode } from './src'
+// import { generateBasicScript, handleFontBuffer, processNameUtilScript } from './src/utils'
+import { loadInNode } from './dist'
+import { generateBasicScript, handleFontBuffer, processNameUtilScript } from './dist/utils'
 
-const buf = new Uint8Array(readFileSync('./test.ttf'))
+const buf = new Uint8Array(readFileSync('./playground/test.ttf'))
 
 loadInNode({ packageCacheDir: './cache', woff2: true })
   .then(async py => (await handleFontBuffer(py, buf, generateBasicScript(`

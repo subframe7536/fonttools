@@ -41,7 +41,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "vite serve playground",
+    "dev": "pnpm run build && vite serve playground",
     "lint": "tsc --noEmit && eslint . --max-warnings 0",
     "format": "eslint . --fix",
     "build": "node build.js",
