@@ -5,10 +5,10 @@ import { build } from 'tsup'
 const packageCacheDir = './cache'
 const versionInfoPath = `${packageCacheDir}/PYODIDE_VERSION`
 
-function copyJsWithTransform(name, transform, newName = name) {
+function copyJsWithTransform(name, transform) {
   const data = fs.readFileSync(`./node_modules/pyodide/${name}`, 'utf-8')
   const content = transform ? transform(data) : data
-  fs.writeFileSync(`./dist/${newName}`, content)
+  fs.writeFileSync(`./dist/${name}`, content)
 }
 function copyBinary(name, newName = name) {
   fs.cpSync(`./node_modules/pyodide/${name}`, `./dist/${newName}`)
@@ -70,12 +70,7 @@ loadPyodide({ packageCacheDir })
     copyCachedWhl(files)
     copyBinary('pyodide.asm.wasm')
     copyBinary('python_stdlib.zip')
-    copyJsWithTransform(
-      'pyodide.asm.js',
-      data => data
-        .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"', 'true')
-        .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"&&!process.browser', 'true'),
-    )
+    copyJsWithTransform('pyodide.asm.js')
     copyJsWithTransform(
       'pyodide-lock.json',
       (data) => {
