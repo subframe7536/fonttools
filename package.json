@@ -1,7 +1,7 @@
 {
   "name": "@subframe7536/fonttools",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "[ESM only] fonttools for nodejs or web powered by pyodide, compatible with Vite",
   "author": "subframe7536",
   "license": "MIT",
