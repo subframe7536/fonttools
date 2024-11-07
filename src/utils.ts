@@ -43,7 +43,7 @@ export async function handleFontBuffer(
 }
 
 /**
- * Name Id for `name` table,see details in {@link https://learn.microsoft.com/en-us/typography/opentype/spec/name#name-ids SPEC}
+ * Name Id for `name` table, see details in {@link https://learn.microsoft.com/en-us/typography/opentype/spec/name#name-ids SPEC}
  */
 export const NameId = {
   Copyright: 0,
