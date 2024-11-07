@@ -5,18 +5,30 @@ import { build } from 'tsup'
 const packageCacheDir = './cache'
 const versionInfoPath = `${packageCacheDir}/PYODIDE_VERSION`
 
-function cpAssetsWithTransform(name, transform, newName = name) {
+function copyJsWithTransform(name, transform, newName = name) {
   const data = fs.readFileSync(`./node_modules/pyodide/${name}`, 'utf-8')
   const content = transform ? transform(data) : data
   fs.writeFileSync(`./dist/${newName}`, content)
 }
-function cpAssets(name, newName = name) {
+function copyBinary(name, newName = name) {
   fs.cpSync(`./node_modules/pyodide/${name}`, `./dist/${newName}`)
 }
 
-function cpCachedWhl(fileNames) {
+function copyCachedWhl(fileNames) {
   for (const name of fileNames) {
     fs.cpSync(`./cache/${name}`, `./dist/${name}`)
+  }
+}
+
+function checkCachedWhl(fileNames) {
+  let count = 0
+  for (const name of fileNames) {
+    if ((name.startsWith('Brotli') || name.startsWith('fonttools')) && name.endsWith('.whl')) {
+      count++
+    }
+  }
+  if (fileNames.length < 3 || count < 2) {
+    throw new Error('No fonttools and brotli `.whl` file found')
   }
 }
 
@@ -50,23 +62,21 @@ loadPyodide({ packageCacheDir })
   })
   .then(async () => {
     const files = fs.readdirSync('./cache')
-    if (!files || files.length < 3) {
-      throw new Error('No fonttools and brotli files')
-    }
+    checkCachedWhl(files)
     try {
       fs.rmdirSync('./dist', { recursive: true })
     } catch {}
 
-    cpCachedWhl(files)
-    cpAssets('pyodide.asm.wasm')
-    cpAssets('python_stdlib.zip')
-    cpAssetsWithTransform(
+    copyCachedWhl(files)
+    copyBinary('pyodide.asm.wasm')
+    copyBinary('python_stdlib.zip')
+    copyJsWithTransform(
       'pyodide.asm.js',
       data => data
         .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"', 'true')
         .replace('typeof process=="object"&&typeof process.versions=="object"&&typeof process.versions.node=="string"&&!process.browser', 'true'),
     )
-    cpAssetsWithTransform(
+    copyJsWithTransform(
       'pyodide-lock.json',
       (data) => {
         const json = JSON.parse(data)
