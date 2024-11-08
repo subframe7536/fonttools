@@ -20,7 +20,7 @@ export type AssetsKey = typeof assetsKey[keyof typeof assetsKey]
 
 export interface FonttoolsPluginOptions {
   /**
-   * URL prefix for assets.
+   * Custom URL for assets.
    *
    * There are 6 assets that the plugin handled:
    * - 2 `.whl` file: For `fonttools` and `brotli`(for `woff2`)
@@ -45,7 +45,7 @@ export interface FonttoolsPluginOptions {
    * handleURL = (key, originalMap, finalMap) => `deep/${finalMap(key)![0]}`
    * // your finalWasmURL is 'https://example.com/project/deep/assets/pyodide.asm-[hash].wasm'
    */
-  handleURL?: (
+  customURL?: (
     currentAssetsKey: AssetsKey,
     assetsNameMap: Map<AssetsKey, string>,
     finalAssetsPathMap: Map<AssetsKey, [path: string, source: string | Uint8Array]>
@@ -54,7 +54,7 @@ export interface FonttoolsPluginOptions {
 
 export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
   const {
-    handleURL = (key, _, finalMap) => path.basename(finalMap.get(key)![0]),
+    customURL = (key, _, finalMap) => path.basename(finalMap.get(key)![0]),
   } = options
   const fonttoolsDistRoot = path.dirname(createRequire(import.meta.url).resolve('@subframe7536/fonttools'))
   const assetsNameMap = new Map<AssetsKey, string>()
@@ -131,27 +131,27 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
 
       const [lockFilePath, lockFileSource] = finalAssetsPathMap.get(assetsKey.lock)!
       const json = JSON.parse(lockFileSource as string)
-      json.packages.brotli.file_name = handleURL(assetsKey.brotli, assetsNameMap, finalAssetsPathMap)
-      json.packages.fonttools.file_name = handleURL(assetsKey.fonttools, assetsNameMap, finalAssetsPathMap)
+      json.packages.brotli.file_name = customURL(assetsKey.brotli, assetsNameMap, finalAssetsPathMap)
+      json.packages.fonttools.file_name = customURL(assetsKey.fonttools, assetsNameMap, finalAssetsPathMap)
       fs.writeFileSync(path.join(outputDir, lockFilePath), JSON.stringify(json))
       logger.info(`Update lock file`, { timestamp: true })
 
       const updatedImporterSource = importerSource
         .replace(
           assetsNameMap.get(assetsKey.asmjs)!,
-          handleURL(assetsKey.asmjs, assetsNameMap, finalAssetsPathMap),
+          customURL(assetsKey.asmjs, assetsNameMap, finalAssetsPathMap),
         )
         .replace(
           assetsNameMap.get(assetsKey.wasm)!,
-          handleURL(assetsKey.wasm, assetsNameMap, finalAssetsPathMap),
+          customURL(assetsKey.wasm, assetsNameMap, finalAssetsPathMap),
         )
         .replace(
           assetsNameMap.get(assetsKey.zip)!,
-          handleURL(assetsKey.zip, assetsNameMap, finalAssetsPathMap),
+          customURL(assetsKey.zip, assetsNameMap, finalAssetsPathMap),
         )
         .replace(
           assetsNameMap.get(assetsKey.lock)!,
-          handleURL(assetsKey.lock, assetsNameMap, finalAssetsPathMap),
+          customURL(assetsKey.lock, assetsNameMap, finalAssetsPathMap),
         )
 
       fs.writeFileSync(importerPath, updatedImporterSource)

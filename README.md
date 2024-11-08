@@ -1,6 +1,6 @@
 ## @subframe7536/fonttools
 
-`fonttools` for nodejs or web powered by `pyodide`, compatible with `vite`
+`fonttools` for nodejs or web with `vite` plugin, powered by `pyodide`
 
 Under development, breaking changes expected. Use at your own risk
 
@@ -87,11 +87,39 @@ a.remove()
 Copy assets to root while building
 
 ```ts
-import { fonttoolsPlugin } from '@subframe7536/fontools/vite'
+import { fonttools } from '@subframe7536/fontools/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [fonttoolsPlugin()],
+  plugins: [fonttools()],
+})
+```
+
+#### Custom URL
+
+There are 6 assets that the plugin handled:
+- 2 `.whl` file: For `fonttools` and `brotli`(for `woff2`)
+- 1 lock file: Load `.whl`
+- 1 asm.js file: EMScript generated file
+- 1 asm.wasm file: EMScript generated file
+- 1 zip file: Python stdlibs
+
+And importer that use `loadInBrowser` imports lock file, asm.js, asm.wasm and zip file
+
+Final loaded url pattern: `{indexURL}{urlPrefix}{assetsName}`
+
+By default, all the assets is loaded from the same directory as importer in production.
+You should set it if your `build.assetsDir` or `build.rollupOptions.output.assetFileNames` is modified.
+
+So, here is a example to custom assets url:
+
+```ts
+fonttools({
+  customURL: (
+    currentAssetsKey: AssetsKey,
+    assetsNameMap: Map<AssetsKey, string>,
+    finalAssetsPathMap: Map<AssetsKey, [path: string, source: string | Uint8Array]>
+  ) => `deep/${finalAssetsPathMap(currentAssetsKey)![0]}`
 })
 ```
 
