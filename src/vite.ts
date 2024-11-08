@@ -39,6 +39,7 @@ export interface FonttoolsPluginOptions {
    * @param currentAssetsKey key to access `originalAssetsPathMap` and `finalAssetsPathMap`
    * @param assetsNameMap assets name map, use `currentAssetsKey` to get file name
    * @param finalAssetsPathMap final assets path map, use `currentAssetsKey` to get final file path
+   * @param importer [importerPath, importerCode]
    * @example
    * // assert your `assetsDir` is default
    * // and productionURL is 'https://example.com/project'
@@ -48,7 +49,8 @@ export interface FonttoolsPluginOptions {
   customURL?: (
     currentAssetsKey: AssetsKey,
     assetsNameMap: Map<AssetsKey, string>,
-    finalAssetsPathMap: Map<AssetsKey, [path: string, source: string | Uint8Array]>
+    finalAssetsPathMap: Map<AssetsKey, [path: string, source: string | Uint8Array]>,
+    importer: [path: string, code: string]
   ) => string
 }
 
@@ -59,8 +61,7 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
   const fonttoolsDistRoot = path.dirname(createRequire(import.meta.url).resolve('@subframe7536/fonttools'))
   const assetsNameMap = new Map<AssetsKey, string>()
   const finalAssetsPathMap = new Map<AssetsKey, [path: string, source: string | Uint8Array]>()
-  let importerPath = ''
-  let importerSource = ''
+  const importers: [path: string, code: string][] = []
   let outputDir = 'dist'
   return {
     name: 'vite-plugin-fonttools',
@@ -112,8 +113,7 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
       for (const [filePath, info] of Object.entries(bundle)) {
         if (info.type === 'chunk') {
           if (info.code.includes('pyodide.web.asm.js')) {
-            importerPath = path.join(outputDir, filePath)
-            importerSource = info.code
+            importers.push([path.join(outputDir, filePath), info.code])
           }
         } else {
           const key = info.originalFileNames[0] as AssetsKey
@@ -124,38 +124,52 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
       }
     },
     closeBundle() {
-      if (!importerSource || !importerPath) {
+      if (importers.length < 1) {
         logger.warn(`No importer found, skip`, { timestamp: true })
         return
       }
 
-      const [lockFilePath, lockFileSource] = finalAssetsPathMap.get(assetsKey.lock)!
-      const json = JSON.parse(lockFileSource as string)
-      json.packages.brotli.file_name = customURL(assetsKey.brotli, assetsNameMap, finalAssetsPathMap)
-      json.packages.fonttools.file_name = customURL(assetsKey.fonttools, assetsNameMap, finalAssetsPathMap)
-      fs.writeFileSync(path.join(outputDir, lockFilePath), JSON.stringify(json))
-      logger.info(`Update lock file`, { timestamp: true })
+      for (const importer of importers) {
+        const [importerPath, importerCode] = importer
+        const [lockFilePath, lockFileSource] = finalAssetsPathMap.get(assetsKey.lock)!
+        const json = JSON.parse(lockFileSource as string)
+        json.packages.brotli.file_name = customURL(
+          assetsKey.brotli,
+          assetsNameMap,
+          finalAssetsPathMap,
+          importer,
+        )
+        json.packages.fonttools.file_name = customURL(
+          assetsKey.fonttools,
+          assetsNameMap,
+          finalAssetsPathMap,
+          importer,
+        )
+        const lockFileFinalPath = path.join(outputDir, lockFilePath)
+        fs.writeFileSync(lockFileFinalPath, JSON.stringify(json))
+        logger.info(`Update lock file: ${lockFileFinalPath}`, { timestamp: true })
 
-      const updatedImporterSource = importerSource
-        .replace(
-          assetsNameMap.get(assetsKey.asmjs)!,
-          customURL(assetsKey.asmjs, assetsNameMap, finalAssetsPathMap),
-        )
-        .replace(
-          assetsNameMap.get(assetsKey.wasm)!,
-          customURL(assetsKey.wasm, assetsNameMap, finalAssetsPathMap),
-        )
-        .replace(
-          assetsNameMap.get(assetsKey.zip)!,
-          customURL(assetsKey.zip, assetsNameMap, finalAssetsPathMap),
-        )
-        .replace(
-          assetsNameMap.get(assetsKey.lock)!,
-          customURL(assetsKey.lock, assetsNameMap, finalAssetsPathMap),
-        )
+        const updatedImporterCode = importerCode
+          .replace(
+            assetsNameMap.get(assetsKey.asmjs)!,
+            customURL(assetsKey.asmjs, assetsNameMap, finalAssetsPathMap, importer),
+          )
+          .replace(
+            assetsNameMap.get(assetsKey.wasm)!,
+            customURL(assetsKey.wasm, assetsNameMap, finalAssetsPathMap, importer),
+          )
+          .replace(
+            assetsNameMap.get(assetsKey.zip)!,
+            customURL(assetsKey.zip, assetsNameMap, finalAssetsPathMap, importer),
+          )
+          .replace(
+            assetsNameMap.get(assetsKey.lock)!,
+            customURL(assetsKey.lock, assetsNameMap, finalAssetsPathMap, importer),
+          )
 
-      fs.writeFileSync(importerPath, updatedImporterSource)
-      logger.info(`Update importer`, { timestamp: true })
+        fs.writeFileSync(importerPath, updatedImporterCode)
+        logger.info(`Update importer: ${importerPath}`, { timestamp: true })
+      }
     },
   }
 }

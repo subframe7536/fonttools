@@ -118,7 +118,8 @@ fonttools({
   customURL: (
     currentAssetsKey: AssetsKey,
     assetsNameMap: Map<AssetsKey, string>,
-    finalAssetsPathMap: Map<AssetsKey, [path: string, source: string | Uint8Array]>
+    finalAssetsPathMap: Map<AssetsKey, [path: string, source: string | Uint8Array]>,
+    importer: [path: string, code: string]
   ) => `deep/${finalAssetsPathMap(currentAssetsKey)![0]}`
 })
 ```
