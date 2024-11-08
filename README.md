@@ -82,6 +82,19 @@ a.click()
 a.remove()
 ```
 
+### Vite Plugin
+
+Copy assets to root while building
+
+```ts
+import { fonttoolsPlugin } from '@subframe7536/fontools/vite'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [fonttoolsPlugin()],
+})
+```
+
 ### Credit
 
 pyodide

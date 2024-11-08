@@ -15,23 +15,27 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./web": {
       "types": "./dist/web.d.ts",
-      "import": "./dist/web.js"
+      "default": "./dist/web.js"
     },
     "./utils": {
       "types": "./dist/utils.d.ts",
-      "import": "./dist/utils.js"
+      "default": "./dist/utils.js"
     },
-    "./pyodide.asm.js": "./dist/pyodide.asm.js",
-    "./pyodide.web.asm.js": "./dist/pyodide.web.asm.js",
-    "./pyodide-lock.json": "./dist/pyodide-lock.json",
-    "./python_stdlib.zip": "./dist/python_stdlib.zip",
-    "./pyodide.asm.wasm": "./dist/pyodide.asm.wasm",
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.js"
+    },
+    "./Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl": "./dist/Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
     "./fonttools-4.51.0-py3-none-any.whl": "./dist/fonttools-4.51.0-py3-none-any.whl",
-    "./Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl": "./dist/Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl"
+    "./pyodide.asm.wasm": "./dist/pyodide.asm.wasm",
+    "./python_stdlib.zip": "./dist/python_stdlib.zip",
+    "./pyodide.asm.js": "./dist/pyodide.asm.js",
+    "./pyodide-lock.json": "./dist/pyodide-lock.json",
+    "./pyodide.web.asm.js": "./dist/pyodide.web.asm.js"
   },
   "module": "dist/index.js",
   "typesVersions": {
@@ -41,6 +45,9 @@
       ],
       "utils": [
         "./dist/utils.d.ts"
+      ],
+      "vite": [
+        "./dist/vite.d.ts"
       ]
     }
   },
@@ -48,13 +55,13 @@
     "dist"
   ],
   "scripts": {
-    "dev": "pnpm run build && vite serve playground",
+    "dev": "pnpm run build && cd ./playground && pnpm run dev",
     "lint": "tsc --noEmit && eslint . --max-warnings 0",
     "format": "eslint . --fix",
     "build": "node build.js",
     "release": "pnpm test && pnpm run build && bumpp --all && npm publish",
     "test": "vitest --run",
-    "test:build": "pnpm run build && vite build playground",
+    "test:build": "pnpm run build && cd ./playground && pnpm run preview ",
     "bench": "pnpm run build && vitest bench --run"
   },
   "publishConfig": {

@@ -5,25 +5,65 @@ import { build } from 'tsup'
 const packageCacheDir = './cache'
 const versionInfoPath = `${packageCacheDir}/PYODIDE_VERSION`
 
+const entries = ['index', 'web', 'utils', 'vite']
+const basicExports = Object.fromEntries(
+  entries.map(k => [
+    k === 'index' ? '.' : `./${k}`,
+    {
+      types: `./dist/${k}.d.ts`,
+      default: `./dist/${k}.js`,
+    },
+  ]),
+)
+
+const typesVersions = {
+  '*': Object.fromEntries(
+    Object.entries(basicExports)
+      .filter(e => e[0] !== '.')
+      .map(([k, v]) => [k.substring(2), [v.types]]),
+  ),
+}
+
+const extraAssetsExports = {}
+
+/**
+ * @param {string} name name
+ * @param {(data: string) => string} transform fn
+ */
 function copyJsWithTransform(name, transform) {
   const data = fs.readFileSync(`./node_modules/pyodide/${name}`, 'utf-8')
   const content = transform ? transform(data) : data
-  fs.writeFileSync(`./dist/${name}`, content)
-}
-function copyBinary(name, newName = name) {
-  fs.cpSync(`./node_modules/pyodide/${name}`, `./dist/${newName}`)
+  const targetPath = `./dist/${name}`
+  extraAssetsExports[name] = targetPath
+  fs.writeFileSync(targetPath, content)
 }
 
+/**
+ * @param {string} name name
+ */
+function copyBinary(name) {
+  const targetPath = `./dist/${name}`
+  extraAssetsExports[name] = targetPath
+  fs.cpSync(`./node_modules/pyodide/${name}`, targetPath)
+}
+
+/**
+ * @param {string[]} fileNames file names
+ */
 function copyCachedWhl(fileNames) {
   for (const name of fileNames) {
     fs.cpSync(`./cache/${name}`, `./dist/${name}`)
   }
 }
 
+/**
+ * @param {string[]} fileNames file names
+ */
 function checkCachedWhl(fileNames) {
   let count = 0
   for (const name of fileNames) {
     if ((name.startsWith('Brotli') || name.startsWith('fonttools')) && name.endsWith('.whl')) {
+      extraAssetsExports[name] = `./dist/${name}`
       count++
     }
   }
@@ -40,6 +80,76 @@ const commonConfig = {
   dts: { resolve: true },
   treeshake: true,
   external: ['vite', 'esbuild'],
+}
+
+/**
+ * @type {Exclude<import('tsup').Options['plugins'], undefined>[0]}
+ */
+const nodePlugin = {
+  name: 'fix pyodide in node',
+  renderChunk(code, { path }) {
+    if (path.endsWith('index.js')) {
+      return {
+        code: code
+          .replace(/typeof process\s*==\s*"object"\s*&&\s*typeof process.versions\s*==\s*"object"\s*&&\s*typeof process.versions.node\s*==\s*"string"\s*&&\s*!process.browser/, 'true')
+          .replace(/typeof window\s*==\s*"object"\s*&&\s*typeof document\s*==\s*"object"\s*&&\s*typeof document.createElement\s*==\s*"function"\s*&&\s*typeof sessionStorage\s*==\s*"object"\s*&&\s*typeof importScripts\s*!=\s*"function"/, 'false')
+          .replace(/typeof importScripts\s*==\s*"function"\s*&&\s*typeof self\s*==\s*"object"/, 'false')
+          .replace(/typeof navigator\s*==\s*"object"\s*&&\s*typeof navigator.userAgent\s*==\s*"string"\s*&&\s*navigator.userAgent.indexOf("Chrome")\s*==\s*-1\s*&&\s*navigator.userAgent.indexOf("Safari")\s*>\s*-1/, 'false'),
+        map: null,
+      }
+    }
+  },
+}
+
+/**
+ * @type {Exclude<import('tsup').Options['plugins'], undefined>[0]}
+ */
+const webPlugin = {
+  name: 'fix pyodide in web',
+  renderChunk(code, { path }) {
+    if (path.endsWith('web.js')) {
+      return {
+        code: code
+          .replace(/c\(\w+, "node[^"]+"\);/g, '')
+          .replaceAll('await import(', 'await import(/*@vite-ignore*/')
+          .replace('typeof Deno', 'undefined')
+          .replace(/typeof process\s*==\s*"object"\s*&&\s*typeof process.versions\s*==\s*"object"\s*&&\s*typeof process.versions.node\s*==\s*"string"\s*&&\s*!process.browser/, 'false')
+          .replace('pyodide.asm.js', 'pyodide.web.asm.js'),
+        map: null,
+      }
+    }
+  },
+}
+
+/**
+ * @type {Exclude<import('tsup').Options['plugins'], undefined>[0]}
+ */
+const asmJsWebPlugin = {
+  name: 'optimize pyodide.asm.js for web',
+  renderChunk(code, { path }) {
+    if (path.endsWith('asm.js')) {
+      extraAssetsExports['pyodide.web.asm.js'] = './dist/pyodide.web.asm.js'
+      return {
+        code: code
+          .replace(/__require\("[^"]+"\)/g, '{}')
+          .replace(/__filename/g, 'undefined')
+          .replace(/require\("[^"]+"\)/g, '{}')
+          .replace(/await import\("node:[^"]+"\)/g, '{}')
+          .replace(/await import\("ws"\)/g, '{}')
+          .replace('typeof window == "object"', 'true')
+          .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'true')
+          .replace('typeof importScripts == "function"', 'false')
+          .replace('typeof Deno < "u"', 'false')
+          .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string"', 'false')
+          .replace('throw new Error("Cannot determine runtime environment");', ';')
+          .replace('typeof importScripts == "function" && typeof self == "object", _r = typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false')
+          .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
+          .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
+          .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}'),
+        map: null,
+      }
+    }
+  },
 }
 
 loadPyodide({ packageCacheDir })
@@ -87,58 +197,25 @@ loadPyodide({ packageCacheDir })
         })
       },
     )
+
     await build({
       ...commonConfig,
       entry: [
         'src/index.ts',
         'src/utils.ts',
       ],
-      plugins: [
-        {
-          name: 'fix pyodide in node',
-          renderChunk(code, { path }) {
-            if (path.endsWith('index.js')) {
-              return {
-                code: code
-                  .replace(/typeof process\s*==\s*"object"\s*&&\s*typeof process.versions\s*==\s*"object"\s*&&\s*typeof process.versions.node\s*==\s*"string"\s*&&\s*!process.browser/, 'true')
-                  .replace(/typeof window\s*==\s*"object"\s*&&\s*typeof document\s*==\s*"object"\s*&&\s*typeof document.createElement\s*==\s*"function"\s*&&\s*typeof sessionStorage\s*==\s*"object"\s*&&\s*typeof importScripts\s*!=\s*"function"/, 'false')
-                  .replace(/typeof importScripts\s*==\s*"function"\s*&&\s*typeof self\s*==\s*"object"/, 'false')
-                  .replace(/typeof navigator\s*==\s*"object"\s*&&\s*typeof navigator.userAgent\s*==\s*"string"\s*&&\s*navigator.userAgent.indexOf("Chrome")\s*==\s*-1\s*&&\s*navigator.userAgent.indexOf("Safari")\s*>\s*-1/, 'false'),
-                map: null,
-              }
-            }
-          },
-        },
-      ],
+      plugins: [nodePlugin],
     })
+
     await build({
       ...commonConfig,
       entry: [
         'src/web.ts',
       ],
       shims: false,
-      plugins: [
-        {
-          name: 'fix pyodide in web',
-          renderChunk(code, { path }) {
-            if (path.endsWith('web.js')) {
-              return {
-                code: code
-                  .replace('typeof Deno', 'undefined')
-                  .replace(/typeof process\s*==\s*"object"\s*&&\s*typeof process.versions\s*==\s*"object"\s*&&\s*typeof process.versions.node\s*==\s*"string"\s*&&\s*!process.browser/, 'false')
-                  .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'true')
-                  .replace('typeof importScripts == "function" && typeof self == "object";', 'true')
-                  .replace('typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1"', '')
-                  .replace(/c\(.*, "loadScript"\);/g, '{}')
-                  .replace(/let f.*pyodide.asm.js`;[\s\S]*await F\(f\);/, 'typeof importScript === "function" ? importScripts("./pyodide.web.asm.js") : await import("./pyodide.web.asm.js");')
-                  .replace(/c\(\w+, "node[^"]+"\);/g, ''),
-                map: null,
-              }
-            }
-          },
-        },
-      ],
+      plugins: [webPlugin],
     })
+
     await build({
       ...commonConfig,
       entry: {
@@ -147,40 +224,32 @@ loadPyodide({ packageCacheDir })
       dts: false,
       minify: false,
       external: ['ws'],
-      plugins: [
-        {
-          name: 'optimize pyodide.asm.js for web',
-          renderChunk(code, { path }) {
-            if (path.endsWith('asm.js')) {
-              return {
-                code: code
-                  .replace(/__require\("[^"]+"\)/g, '{}')
-                  .replace(/__filename/g, 'undefined')
-                  .replace(/require\("[^"]+"\)/g, '{}')
-                  .replace(/await import\("node:[^"]+"\)/g, '{}')
-                  .replace(/await import\("ws"\)/g, '{}')
-                  .replace('typeof window == "object"', 'true')
-                  .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'true')
-                  .replace('typeof importScripts == "function"', 'false')
-                  .replace('typeof Deno < "u"', 'false')
-                  .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string"', 'false')
-                  // .replaceAll('await import(', 'await import(/*@vite-ignore*/')
-                  .replace('typeof importScripts == "function" && typeof self == "object", _r = typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false')
-                  .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
-                  .replace('throw new Error("Cannot determine runtime environment");', '{}')
-                  .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
-                  .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}'),
-                map: null,
-              }
-            }
-          },
-        },
-      ],
+      plugins: [asmJsWebPlugin],
     })
+
+    // await build({
+    //   ...commonConfig,
+    //   entry: ['./dist/pyodide.web.asm.js'],
+    //   dts: false,
+    //   minify: true,
+    // })
+
     await build({
       ...commonConfig,
-      entry: ['./dist/pyodide.web.asm.js'],
-      dts: false,
-      minify: true,
+      entry: [
+        'src/vite.ts',
+      ],
+      define: {
+        __ASSETS__: JSON.stringify(
+          Object.keys(extraAssetsExports).filter(e => e !== 'pyodide.asm.js'),
+        ),
+      },
     })
+    const packageJson = JSON.parse(fs.readFileSync('./package.json'))
+    packageJson.typesVersions = typesVersions
+    packageJson.exports = {
+      ...basicExports,
+      ...Object.fromEntries(Object.entries(extraAssetsExports).map(([k, v]) => [`./${k}`, v])),
+    }
+    fs.writeFileSync('./package.json', `${JSON.stringify(packageJson, null, 2)}\n`)
   })
