@@ -32,9 +32,12 @@ function checkCachedWhl(fileNames) {
   }
 }
 
+/**
+ * @type {import('tsup').Options}
+ */
 const commonConfig = {
   format: ['esm'],
-  dts: true,
+  dts: { resolve: true },
   treeshake: true,
   external: ['vite', 'esbuild'],
 }
@@ -123,9 +126,12 @@ loadPyodide({ packageCacheDir })
                 code: code
                   .replace('typeof Deno', 'undefined')
                   .replace(/typeof process\s*==\s*"object"\s*&&\s*typeof process.versions\s*==\s*"object"\s*&&\s*typeof process.versions.node\s*==\s*"string"\s*&&\s*!process.browser/, 'false')
-                  .replaceAll('await import(', 'await import(/*@vite-ignore*/')
-                  .replace(/c\(\w+, "node[^"]+"\);/g, '')
-                  .replace('pyodide.asm.js', 'pyodide.web.asm.js'),
+                  .replace('typeof window == "object" && typeof document == "object" && typeof document.createElement == "function" && typeof sessionStorage == "object" && typeof importScripts != "function"', 'true')
+                  .replace('typeof importScripts == "function" && typeof self == "object";', 'true')
+                  .replace('typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1"', '')
+                  .replace(/c\(.*, "loadScript"\);/g, '{}')
+                  .replace(/let f.*pyodide.asm.js`;[\s\S]*await F\(f\);/, 'typeof importScript === "function" ? importScripts("./pyodide.web.asm.js") : await import("./pyodide.web.asm.js");')
+                  .replace(/c\(\w+, "node[^"]+"\);/g, ''),
                 map: null,
               }
             }
@@ -163,8 +169,7 @@ loadPyodide({ packageCacheDir })
                   .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
                   .replace('throw new Error("Cannot determine runtime environment");', '{}')
                   .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
-                  .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}')
-                  .replace(/let f.*pyodide.asm.js`;[\s\S]*await F\(f\);/, 'typeof importScript === "function" ? : await importScripts("./pyodide.web.asm.js") await import("./pyodide.web.asm.js");'),
+                  .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}'),
                 map: null,
               }
             }

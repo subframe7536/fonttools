@@ -24,7 +24,14 @@
     "./utils": {
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.js"
-    }
+    },
+    "./pyodide.asm.js": "./dist/pyodide.asm.js",
+    "./pyodide.web.asm.js": "./dist/pyodide.web.asm.js",
+    "./pyodide-lock.json": "./dist/pyodide-lock.json",
+    "./python_stdlib.zip": "./dist/python_stdlib.zip",
+    "./pyodide.asm.wasm": "./dist/pyodide.asm.wasm",
+    "./fonttools-4.51.0-py3-none-any.whl": "./dist/fonttools-4.51.0-py3-none-any.whl",
+    "./Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl": "./dist/Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl"
   },
   "module": "dist/index.js",
   "typesVersions": {
@@ -47,6 +54,7 @@
     "build": "node build.js",
     "release": "pnpm test && pnpm run build && bumpp --all && npm publish",
     "test": "vitest --run",
+    "test:build": "pnpm run build && vite build playground",
     "bench": "pnpm run build && vitest bench --run"
   },
   "publishConfig": {
