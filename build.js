@@ -227,12 +227,12 @@ loadPyodide({ packageCacheDir })
       plugins: [asmJsWebPlugin],
     })
 
-    // await build({
-    //   ...commonConfig,
-    //   entry: ['./dist/pyodide.web.asm.js'],
-    //   dts: false,
-    //   minify: true,
-    // })
+    await build({
+      ...commonConfig,
+      entry: ['./dist/pyodide.web.asm.js'],
+      dts: false,
+      minify: true,
+    })
 
     await build({
       ...commonConfig,
