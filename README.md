@@ -124,6 +124,10 @@ fonttools({
 })
 ```
 
+### CDN Example
+
+See in [cdn.html](./cdn.html)
+
 ### Credit
 
 pyodide
