@@ -144,6 +144,9 @@ const asmJsWebPlugin = {
           .replace('throw new Error("Cannot determine runtime environment");', ';')
           .replace('typeof importScripts == "function" && typeof self == "object", _r = typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false')
           .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
+          .replace('Module["NODEFS"] = NODEFS;', '')
+          .replace('"NODEFS": NODEFS,', '')
+          .replace('typeof process == "object"', 'false')
           .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
           .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}'),
         map: null,
