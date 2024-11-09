@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CDN Test</title>
+</head>
+<body>
+  <button>click and download</button>
+</body>
+<script type="module">
+  import { loadInBrowser } from 'https://cdn.jsdelivr.net/npm/@subframe7536/fonttools/dist/web.js'
+  import { generateBasicScript, handleFontBuffer, NameId, processNameUtilScript } from 'https://cdn.jsdelivr.net/npm/@subframe7536/fonttools/dist/utils.js'
+  document.querySelector('button')?.addEventListener('click', async () => {
+    const buf = await (await fetch('https://cdn.jsdelivr.net/npm/@fontsource/inter/files/inter-latin-400-italic.woff2')).arrayBuffer()
+    const py = await loadInBrowser({ woff2: true })
+    const data = await handleFontBuffer(
+      py,
+      new Uint8Array(buf),
+      generateBasicScript(`
+${processNameUtilScript}
+set_font_name(font, 'Test', ${NameId.FamilyName})
+    `),
+    )
+    // download
+    const url = URL.createObjectURL(new Blob([data]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'output.woff2'
+    a.click()
+    a.remove()
+  })
+</script>
+</html>
