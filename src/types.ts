@@ -9,6 +9,14 @@ export type LoadOption = Omit<
    */
   woff2?: boolean
 }
-export type LoadInBrowserOption = Omit<LoadOption, 'packageCacheDir' | '_node_mounts'>
+export type LoadInBrowserOption = Omit<LoadOption, 'packageCacheDir' | '_node_mounts'> & {
+  /**
+   * URL for `.whl` file. Browser only.
+   *
+   * Target URL example: `new URL('fonttools.whl', whlURL || location)`
+   * @default option.indexURL
+   */
+  whlURL?: string
+}
 
 export type LoadInNodeOption = Omit<LoadOption, 'indexURL'>

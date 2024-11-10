@@ -6,7 +6,7 @@ import { loadPyodide } from 'pyodide'
  * Load `fonttools` in `browser`, default index URL is `import.meta.url`
  */
 export async function loadInBrowser(
-  options?: LoadInBrowserOption,
+  options: LoadInBrowserOption,
 ): Promise<PyodideInterface> {
   const packages = ['fonttools']
   if (options?.woff2) {

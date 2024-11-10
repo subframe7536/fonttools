@@ -149,6 +149,7 @@ const asmJsWebPlugin = {
           .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
           .replace('Module["NODEFS"] = NODEFS;', '')
           .replace('"NODEFS": NODEFS,', '')
+          .replace('API.config.indexURL', 'API.config.whlURL || API.config.indexURL')
           // .replace('Module["ERRNO_MESSAGES"] = ERRNO_MESSAGES;', '')
           // .replace('Module["IDBFS"] = IDBFS;', '')
           // .replace('"IDBFS": IDBFS,', '')
