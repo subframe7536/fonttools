@@ -11,6 +11,8 @@
 <script type="module">
   import { loadInBrowser } from 'https://cdn.jsdelivr.net/npm/@subframe7536/fonttools/dist/web.js'
   import { generateBasicScript, handleFontBuffer, NameId, processNameUtilScript } from 'https://cdn.jsdelivr.net/npm/@subframe7536/fonttools/dist/utils.js'
+  // import { loadInBrowser } from 'https://unpkg.com/@subframe7536/fonttools/dist/web.js'
+  // import { generateBasicScript, handleFontBuffer, NameId, processNameUtilScript } from 'https://unpkg.com/@subframe7536/fonttools/dist/utils.js'
   document.querySelector('button')?.addEventListener('click', async () => {
     const buf = await (await fetch('https://cdn.jsdelivr.net/npm/@fontsource/inter/files/inter-latin-400-italic.woff2')).arrayBuffer()
     const py = await loadInBrowser({ woff2: true })

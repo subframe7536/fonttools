@@ -207,6 +207,7 @@ loadPyodide({ packageCacheDir })
         'src/index.ts',
         'src/utils.ts',
       ],
+      minify: true,
       plugins: [nodePlugin],
     })
 
@@ -215,6 +216,7 @@ loadPyodide({ packageCacheDir })
       entry: [
         'src/web.ts',
       ],
+      minify: true,
       shims: false,
       plugins: [webPlugin],
     })
@@ -225,7 +227,6 @@ loadPyodide({ packageCacheDir })
         'pyodide.web.asm': './node_modules/pyodide/pyodide.asm.js',
       },
       dts: false,
-      minify: false,
       external: ['ws'],
       plugins: [asmJsWebPlugin],
     })
