@@ -113,7 +113,10 @@ const webPlugin = {
           .replace(/c\(\w+, "node[^"]+"\);/g, '')
           .replaceAll('await import(', 'await import(/*@vite-ignore*/')
           .replace('typeof Deno', 'undefined')
+          .replace('typeof Bun', 'undefined')
           .replace(/typeof process\s*==\s*"object"\s*&&\s*typeof process.versions\s*==\s*"object"\s*&&\s*typeof process.versions.node\s*==\s*"string"\s*&&\s*!process.browser/, 'false')
+          .replace(/typeof navigator\s*==\s*"object"\s*&&\s*typeof navigator.userAgent\s*==\s*"string"\s*&&\s*navigator.userAgent.indexOf("Chrome")\s*==\s*-1\s*&&\s*navigator.userAgent.indexOf("Safari") > -1/, '')
+          .replace('Cannot determine runtime environment', 'Only support load in browser')
           .replace('pyodide.asm.js', 'pyodide.web.asm.js'),
         map: null,
       }
@@ -146,8 +149,13 @@ const asmJsWebPlugin = {
           .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
           .replace('Module["NODEFS"] = NODEFS;', '')
           .replace('"NODEFS": NODEFS,', '')
+          // .replace('Module["ERRNO_MESSAGES"] = ERRNO_MESSAGES;', '')
+          // .replace('Module["IDBFS"] = IDBFS;', '')
+          // .replace('"IDBFS": IDBFS,', '')
           .replace('typeof process == "object"', 'false')
           .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
+          .replace(/\s*\w*\(\w+,\s*"NodeReader"\);/, '')
+          .replace(/\s*\w*\(\w+,\s*"NodeWriter"\);/, '')
           .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}'),
         map: null,
       }
@@ -218,6 +226,8 @@ loadPyodide({ packageCacheDir })
       ],
       minify: true,
       shims: false,
+      cjsInterop: false,
+      external: ['ws', /node:.*/],
       plugins: [webPlugin],
     })
 
@@ -227,7 +237,7 @@ loadPyodide({ packageCacheDir })
         'pyodide.web.asm': './node_modules/pyodide/pyodide.asm.js',
       },
       dts: false,
-      external: ['ws'],
+      external: ['ws', /node:.*/],
       plugins: [asmJsWebPlugin],
     })
 

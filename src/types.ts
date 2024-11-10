@@ -9,6 +9,6 @@ export type LoadOption = Omit<
    */
   woff2?: boolean
 }
-export type LoadInWebOption = Omit<LoadOption, 'packageCacheDir'>
+export type LoadInBrowserOption = Omit<LoadOption, 'packageCacheDir' | '_node_mounts'>
 
 export type LoadInNodeOption = Omit<LoadOption, 'indexURL'>
