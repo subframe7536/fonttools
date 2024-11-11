@@ -128,6 +128,8 @@ fonttools({
 
 See in [cdn.html](./cdn.html)
 
+For [esm.sh](https://esm.sh), you may need to setup `options.stdlibURL` and `options.whlURL` to correctly load
+
 ### Credit
 
 pyodide

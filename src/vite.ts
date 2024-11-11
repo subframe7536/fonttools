@@ -52,11 +52,19 @@ export interface FonttoolsPluginOptions {
     finalAssetsPathMap: Map<AssetsKey, [path: string, source: string | Uint8Array]>,
     importer: [path: string, code: string]
   ) => string
+  /**
+   * Transform code in `pyodide.web.asm.js`
+   */
+  transformAsmJs?: (code: string) => string | undefined | null | void
 }
 
+/**
+ * Vite plugin for `@subframe7536/fonttools/web`, emit missing assets
+ */
 export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
   const {
     customURL = (key, _, finalMap) => path.basename(finalMap.get(key)![0]),
+    transformAsmJs,
   } = options
   const fonttoolsDistRoot = path.dirname(createRequire(import.meta.url).resolve('@subframe7536/fonttools'))
   const assetsNameMap = new Map<AssetsKey, string>()
@@ -169,6 +177,15 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
 
         fs.writeFileSync(importerPath, updatedImporterCode)
         logger.info(`Update importer: ${importerPath}`, { timestamp: true })
+      }
+
+      const asmJsPath = finalAssetsPathMap.get(assetsKey.asmjs)![0]
+      if (typeof transformAsmJs === 'function') {
+        const code = fs.readFileSync(asmJsPath, 'utf-8')
+        const updatedCode = transformAsmJs(code)
+        if (updatedCode) {
+          fs.writeFileSync(asmJsPath, updatedCode, 'utf-8')
+        }
       }
     },
   }
