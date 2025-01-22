@@ -2,9 +2,15 @@
 
 `fonttools` for nodejs or web with `vite` plugin, powered by `pyodide`
 
+ESM Only
+
 Under development, breaking changes expected. Use at your own risk
 
-- `pyodide` version: `0.26.3`
+- `pyodide` version: `0.27.1`
+
+### Why
+
+The `fonttools` binary file is not included in `pyodide` by default, you need to download it from JsDelivr at runtime, and the URL seems not allowed to customize. So I package all the needed file and provide a `vite` plugin to optimize.
 
 ### Install
 
