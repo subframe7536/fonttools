@@ -1,5 +1,6 @@
-import type { PyodideInterface } from 'pyodide'
 import type { LoadInNodeOption } from './types'
+import type { PyodideInterface } from 'pyodide'
+
 import { loadPyodide } from 'pyodide'
 
 /**

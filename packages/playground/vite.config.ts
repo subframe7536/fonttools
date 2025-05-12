@@ -1,4 +1,4 @@
-import { fonttools } from '@subframe7536/fontools/vite'
+import { fonttools } from '@subframe7536/fonttools/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({

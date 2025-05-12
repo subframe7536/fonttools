@@ -1,7 +1,10 @@
+import type { Plugin } from 'vite'
+
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { createLogger, type Plugin } from 'vite'
+
+import { createLogger } from 'vite'
 
 declare const __ASSETS__: string[]
 
@@ -75,6 +78,9 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
     name: 'vite-plugin-fonttools',
     apply: 'build',
     enforce: 'post',
+    config(config) {
+      config.optimizeDeps?.exclude?.push('@subframe7536/fonttools')
+    },
     buildStart() {
       for (const fileName of __ASSETS__) {
         let key: AssetsKey | undefined

@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+
 import { loadPyodide } from 'pyodide'
 import { build } from 'tsup'
 
@@ -11,6 +12,7 @@ const basicExports = Object.fromEntries(
     k === 'index' ? '.' : `./${k}`,
     {
       types: `./dist/${k}.d.ts`,
+      import: `./dist/${k}.js`,
       default: `./dist/${k}.js`,
     },
   ]),
@@ -62,7 +64,7 @@ function copyCachedWhl(fileNames) {
 function checkCachedWhl(fileNames) {
   let count = 0
   for (const name of fileNames) {
-    if ((name.startsWith('Brotli') || name.startsWith('fonttools')) && name.endsWith('.whl')) {
+    if ((name.startsWith('brotli') || name.startsWith('fonttools')) && name.endsWith('.whl')) {
       extraAssetsExports[name] = `./dist/${name}`
       count++
     }
@@ -204,7 +206,7 @@ loadPyodide({ packageCacheDir })
     }
     if (api.version !== fs.readFileSync(versionInfoPath, 'utf-8')) {
       console.log('Version changed, recaching...')
-      fs.rmdirSync(packageCacheDir, { recursive: true })
+      fs.rmSync(packageCacheDir, { recursive: true })
     }
     console.log('target `pyodide` version:', api.version)
     return api
@@ -221,7 +223,7 @@ loadPyodide({ packageCacheDir })
     const files = fs.readdirSync('./cache')
     checkCachedWhl(files)
     try {
-      fs.rmdirSync('./dist', { recursive: true })
+      fs.rmSync('./dist', { recursive: true })
     } catch {}
 
     copyCachedWhl(files)
@@ -279,6 +281,19 @@ loadPyodide({ packageCacheDir })
       entry: ['./dist/pyodide.web.asm.js'],
       dts: false,
       minify: true,
+      plugins: [
+        {
+          name: 'fxxk-vite',
+          renderChunk: (code) => {
+            return {
+              code: code.replace(
+                /await import\(/g,
+                'await import(/* @vite-ignore */',
+              ),
+            }
+          },
+        },
+      ],
     })
 
     await build({

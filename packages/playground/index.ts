@@ -1,7 +1,6 @@
-// import { generateBasicScript, handleFontBuffer } from '../src/utils'
-// import { loadInBrowser } from '../src/web'
-import { generateBasicScript, handleFontBuffer, NameId, processNameUtilScript } from '../dist/utils'
-import { loadInBrowser } from '../dist/web'
+import { generateBasicScript, handleFontBuffer, NameId, processNameUtilScript } from '@subframe7536/fonttools/utils'
+import { loadInBrowser } from '@subframe7536/fonttools/web'
+
 import src from './test.ttf'
 
 document.querySelector('button')?.addEventListener('click', async () => {

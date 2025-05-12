@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs'
+
 // import { loadInNode } from './src'
 // import { generateBasicScript, handleFontBuffer, processNameUtilScript } from './src/utils'
 import { loadInNode } from './dist'

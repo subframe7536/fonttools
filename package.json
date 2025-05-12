@@ -1,5 +1,5 @@
 {
-  "name": "@subframe7536/fonttools",
+  "name": "root",
   "type": "module",
   "version": "0.2.2",
   "description": "[ESM only] fonttools for nodejs or web with vite plugin, powered by pyodide",
@@ -9,79 +9,25 @@
     "type": "git",
     "url": "git+https://github.com/subframe7536/fonttools.git"
   },
-  "bugs": "https://github.com/subframe7536/fonttools/issues",
-  "keywords": [
-    "fonttools",
-    "pyodide",
-    "font",
-    "vite"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./web": {
-      "types": "./dist/web.d.ts",
-      "default": "./dist/web.js"
-    },
-    "./utils": {
-      "types": "./dist/utils.d.ts",
-      "default": "./dist/utils.js"
-    },
-    "./vite": {
-      "types": "./dist/vite.d.ts",
-      "default": "./dist/vite.js"
-    },
-    "./Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl": "./dist/Brotli-1.1.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
-    "./fonttools-4.51.0-py3-none-any.whl": "./dist/fonttools-4.51.0-py3-none-any.whl",
-    "./pyodide.asm.wasm": "./dist/pyodide.asm.wasm",
-    "./python_stdlib.zip": "./dist/python_stdlib.zip",
-    "./pyodide.asm.js": "./dist/pyodide.asm.js",
-    "./pyodide-lock.json": "./dist/pyodide-lock.json",
-    "./pyodide.web.asm.js": "./dist/pyodide.web.asm.js"
-  },
-  "module": "dist/index.js",
-  "typesVersions": {
-    "*": {
-      "web": [
-        "./dist/web.d.ts"
-      ],
-      "utils": [
-        "./dist/utils.d.ts"
-      ],
-      "vite": [
-        "./dist/vite.d.ts"
-      ]
-    }
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "dev": "pnpm run build && cd ./playground && pnpm run dev",
+    "dev": "pnpm run build && cd ./packages/playground && pnpm run dev",
     "lint": "tsc --noEmit && eslint . --max-warnings 0",
     "format": "eslint . --fix",
-    "build": "node build.js",
-    "release": "pnpm test && pnpm run build && bumpp --all && npm publish",
-    "test": "vitest --run",
-    "test:build": "pnpm run build && cd ./playground && pnpm run preview ",
-    "bench": "pnpm run build && vitest bench --run"
+    "build": "cd ./packages/fonttools && pnpm run build",
+    "release": "cd ./packages/fonttools && pnpm run build && bumpp --all && npm publish"
   },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
-    "@subframe7536/eslint-config": "^1.1.7",
-    "@subframe7536/type-utils": "^0.1.6",
-    "@types/node": "^20.17.14",
-    "bumpp": "^9.10.1",
-    "eslint": "^9.18.0",
-    "pyodide": "^0.27.1",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.10",
-    "vitest": "^3.0.2"
+    "@subframe7536/eslint-config": "^1.2.4",
+    "@subframe7536/type-utils": "^0.2.0",
+    "@types/node": "^22.15.17",
+    "bumpp": "^10.1.0",
+    "eslint": "^9.26.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   }
 }
