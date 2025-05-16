@@ -13,7 +13,7 @@ export type LoadInBrowserOption = Omit<LoadOption, 'packageCacheDir' | '_node_mo
   /**
    * URL for `.whl` file. Browser only.
    *
-   * Target URL example: `new URL('fonttools.whl', whlURL || location)`
+   * Target URL example: `new URL('fonttools-4.51.0-py3-none-any.whl', whlURL || location)`
    * @default option.indexURL
    */
   whlURL?: string

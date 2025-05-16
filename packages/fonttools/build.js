@@ -159,10 +159,10 @@ const asmJsWebPlugin = {
           .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
           .replace(/\s*\w*\(\w+,\s*"NodeReader"\);/, '')
           .replace(/\s*\w*\(\w+,\s*"NodeWriter"\);/, '')
-          .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}'),
-        // .replace('Module["ERRNO_MESSAGES"] = ERRNO_MESSAGES;', '')
-        // .replace('Module["IDBFS"] = IDBFS;', '')
-        // .replace('"IDBFS": IDBFS,', '')
+          .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}')
+          // .replace('Module["ERRNO_MESSAGES"] = ERRNO_MESSAGES;', '')
+          .replace('Module["IDBFS"] = IDBFS;', '')
+          .replace('"IDBFS": IDBFS,', ''),
         // // SDL:
         // .replace(/TTF_\w+:\s*_TTF_[^,]*,/g, '')
         // .replace(/Module\["_TTF_\w+"\]\s*=\s*_TTF_\w+;/g, '')

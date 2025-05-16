@@ -1,7 +1,6 @@
 {
   "name": "root",
   "type": "module",
-  "version": "0.2.2",
   "description": "[ESM only] fonttools for nodejs or web with vite plugin, powered by pyodide",
   "author": "subframe7536",
   "license": "MIT",
