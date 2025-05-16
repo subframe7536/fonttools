@@ -1,7 +1,7 @@
 import type { LiteralOrString } from '@subframe7536/type-utils'
 import type { PyodideInterface } from 'pyodide'
 
-type ScriptGenerator = (inputPath: string, outputPath: string) => string
+export type ScriptGenerator = (inputPath: string, outputPath: string) => string
 
 /**
  * Generate a basic script for fonttools
@@ -23,13 +23,13 @@ export type Extension = {
 /**
  * Run a Python script in `pyodide` with input ttf and return processed ttf buffer
  * @param pyodide pyodide instance
- * @param inputBuffer original font buffer
+ * @param inputBuffer original font buffer, common format is `Uint8Array`
  * @param script script string, `font` is `fonttools.ttLib.TTFont` variable
  * @param ext input / output font format. Default input is 'ttf', default output is same as input
  */
 export function handleFontBuffer(
   pyodide: PyodideInterface,
-  inputBuffer: Uint8Array | ArrayBuffer,
+  inputBuffer: ArrayBuffer | ArrayBufferView,
   script: ScriptGenerator,
   ext: Extension = {},
 ): Uint8Array {
@@ -38,7 +38,10 @@ export function handleFontBuffer(
   const outputPath = `/tmp/output.${output}`
 
   try {
-    pyodide.FS.writeFile(inputPath, inputBuffer)
+    pyodide.FS.writeFile(
+      inputPath,
+      inputBuffer instanceof ArrayBuffer ? new Uint8Array(inputBuffer) : inputBuffer,
+    )
 
     const pythonCode = script(inputPath, outputPath)
     pyodide.runPython(pythonCode)

@@ -6,7 +6,7 @@ import src from './test.ttf'
 document.querySelector('button')?.addEventListener('click', async () => {
   const buf = await (await fetch(src)).arrayBuffer()
   const py = await loadInBrowser()
-  const data = await handleFontBuffer(
+  const data = handleFontBuffer(
     py,
     new Uint8Array(buf),
     generateBasicScript(`

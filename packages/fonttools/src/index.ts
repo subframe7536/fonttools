@@ -3,6 +3,9 @@ import type { PyodideInterface } from 'pyodide'
 
 import { loadPyodide } from 'pyodide'
 
+export type { LoadInNodeOption } from './types'
+export type { PyodideInterface } from 'pyodide'
+
 /**
  * Load `fonttools` in `node`
  */

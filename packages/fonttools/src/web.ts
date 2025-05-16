@@ -3,6 +3,7 @@ import type { PyodideInterface } from 'pyodide'
 
 import { loadPyodide } from 'pyodide'
 
+export type { LoadInBrowserOption } from './types'
 /**
  * Load `fonttools` in `browser`, default index URL is `import.meta.url`
  */
