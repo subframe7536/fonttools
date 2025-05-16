@@ -13,7 +13,8 @@
     "lint": "tsc --noEmit && eslint . --max-warnings 0",
     "format": "eslint . --fix",
     "build": "cd ./packages/fonttools && pnpm run build",
-    "release": "cd ./packages/fonttools && pnpm run build && bumpp --all && npm publish"
+    "release": "cd ./packages/fonttools && pnpm run build && bumpp --all && npm publish",
+    "test": "pnpm run build && cd ./packages/playground && pnpm run build"
   },
   "publishConfig": {
     "access": "public",

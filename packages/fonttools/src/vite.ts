@@ -90,7 +90,7 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin[] {
         for (const fileName of __ASSETS__) {
           let key: AssetsKey | undefined
           switch (true) {
-            case fileName.startsWith('Brotli'):
+            case fileName.startsWith('brotli'):
               key = assetsKey.brotli
               break
             case fileName.startsWith('fonttools'):
