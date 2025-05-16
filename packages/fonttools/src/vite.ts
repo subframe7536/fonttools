@@ -64,7 +64,7 @@ export interface FonttoolsPluginOptions {
 /**
  * Vite plugin for `@subframe7536/fonttools/web`, emit missing assets
  */
-export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
+export function fonttools(options: FonttoolsPluginOptions = {}): Plugin[] {
   const {
     customURL = (key, _, finalMap) => path.basename(finalMap.get(key)![0]),
     transformAsmJs,
@@ -74,125 +74,131 @@ export function fonttools(options: FonttoolsPluginOptions = {}): Plugin {
   const finalAssetsPathMap = new Map<AssetsKey, [path: string, source: string | Uint8Array]>()
   const importers: [path: string, code: string][] = []
   let outputDir = 'dist'
-  return {
-    name: 'vite-plugin-fonttools',
-    apply: 'build',
-    enforce: 'post',
-    config(config) {
-      config.optimizeDeps?.exclude?.push('@subframe7536/fonttools')
+  return [
+    {
+      name: 'vite-plugin-fonttools-exclude',
+      enforce: 'pre',
+      config(config) {
+        config.optimizeDeps?.exclude?.push('@subframe7536/fonttools')
+      },
     },
-    buildStart() {
-      for (const fileName of __ASSETS__) {
-        let key: AssetsKey | undefined
-        switch (true) {
-          case fileName.startsWith('Brotli'):
-            key = assetsKey.brotli
-            break
-          case fileName.startsWith('fonttools'):
-            key = assetsKey.fonttools
-            break
-          case fileName.includes('web.asm'):
-            key = assetsKey.asmjs
-            break
-          case fileName.includes('wasm'):
-            key = assetsKey.wasm
-            break
-          case fileName.includes('zip'):
-            key = assetsKey.zip
-            break
-          case fileName.includes('lock'):
-            key = assetsKey.lock
-            break
-          default:
-            logger.warn(`Unknown assets: ${fileName}`, { timestamp: true })
-        }
-        if (key) {
-          assetsNameMap.set(key, fileName)
-        }
-        this.emitFile({
-          type: 'asset',
-          name: fileName,
-          originalFileName: key,
-          source: fs.readFileSync(
-            path.join(fonttoolsDistRoot, fileName),
-            fileName.endsWith('.js') ? 'utf-8' : undefined,
-          ),
-        })
-      }
-    },
-    writeBundle(options, bundle) {
-      if (options.dir) {
-        outputDir = options.dir
-      }
-      for (const [filePath, info] of Object.entries(bundle)) {
-        if (info.type === 'chunk') {
-          if (info.code.includes('pyodide.web.asm.js')) {
-            importers.push([path.join(outputDir, filePath), info.code])
+    {
+      name: 'vite-plugin-fonttools',
+      apply: 'build',
+      enforce: 'post',
+      buildStart() {
+        for (const fileName of __ASSETS__) {
+          let key: AssetsKey | undefined
+          switch (true) {
+            case fileName.startsWith('Brotli'):
+              key = assetsKey.brotli
+              break
+            case fileName.startsWith('fonttools'):
+              key = assetsKey.fonttools
+              break
+            case fileName.includes('web.asm'):
+              key = assetsKey.asmjs
+              break
+            case fileName.includes('wasm'):
+              key = assetsKey.wasm
+              break
+            case fileName.includes('zip'):
+              key = assetsKey.zip
+              break
+            case fileName.includes('lock'):
+              key = assetsKey.lock
+              break
+            default:
+              logger.warn(`Unknown assets: ${fileName}`, { timestamp: true })
           }
-        } else {
-          const key = info.originalFileNames[0] as AssetsKey
-          if (assetsNameMap.has(key)) {
-            finalAssetsPathMap.set(key, [filePath, info.source])
+          if (key) {
+            assetsNameMap.set(key, fileName)
+          }
+          this.emitFile({
+            type: 'asset',
+            name: fileName,
+            originalFileName: key,
+            source: fs.readFileSync(
+              path.join(fonttoolsDistRoot, fileName),
+              fileName.endsWith('.js') ? 'utf-8' : undefined,
+            ),
+          })
+        }
+      },
+      writeBundle(options, bundle) {
+        if (options.dir) {
+          outputDir = options.dir
+        }
+        for (const [filePath, info] of Object.entries(bundle)) {
+          if (info.type === 'chunk') {
+            if (info.code.includes('pyodide.web.asm.js')) {
+              importers.push([path.join(outputDir, filePath), info.code])
+            }
+          } else {
+            const key = info.originalFileNames[0] as AssetsKey
+            if (assetsNameMap.has(key)) {
+              finalAssetsPathMap.set(key, [filePath, info.source])
+            }
           }
         }
-      }
-    },
-    closeBundle() {
-      if (importers.length < 1) {
-        logger.warn(`No importer found, skip`, { timestamp: true })
-        return
-      }
-
-      for (const importer of importers) {
-        const [importerPath, importerCode] = importer
-        const [lockFilePath, lockFileSource] = finalAssetsPathMap.get(assetsKey.lock)!
-        const json = JSON.parse(lockFileSource as string)
-        json.packages.brotli.file_name = customURL(
-          assetsKey.brotli,
-          assetsNameMap,
-          finalAssetsPathMap,
-          importer,
-        )
-        json.packages.fonttools.file_name = customURL(
-          assetsKey.fonttools,
-          assetsNameMap,
-          finalAssetsPathMap,
-          importer,
-        )
-        const lockFileFinalPath = path.join(outputDir, lockFilePath)
-        fs.writeFileSync(lockFileFinalPath, JSON.stringify(json))
-        logger.info(`Update lock file: ${lockFileFinalPath}`, { timestamp: true })
-
-        const updatedImporterCode = importerCode
-          .replace(
-            assetsNameMap.get(assetsKey.asmjs)!,
-            customURL(assetsKey.asmjs, assetsNameMap, finalAssetsPathMap, importer),
-          )
-          .replace(
-            assetsNameMap.get(assetsKey.wasm)!,
-            customURL(assetsKey.wasm, assetsNameMap, finalAssetsPathMap, importer),
-          )
-          .replace(
-            assetsNameMap.get(assetsKey.zip)!,
-            customURL(assetsKey.zip, assetsNameMap, finalAssetsPathMap, importer),
-          )
-          .replace(
-            assetsNameMap.get(assetsKey.lock)!,
-            customURL(assetsKey.lock, assetsNameMap, finalAssetsPathMap, importer),
-          )
-
-        fs.writeFileSync(importerPath, updatedImporterCode)
-        logger.info(`Update importer: ${importerPath}`, { timestamp: true })
-      }
-
-      const asmJsPath = finalAssetsPathMap.get(assetsKey.asmjs)![0]
-      if (typeof transformAsmJs === 'function') {
-        const code = fs.readFileSync(asmJsPath, 'utf-8')
-        const updatedCode = transformAsmJs(code)
-        if (updatedCode) {
-          fs.writeFileSync(asmJsPath, updatedCode, 'utf-8')
+      },
+      closeBundle() {
+        if (importers.length < 1) {
+          logger.warn(`No importer found, skip`, { timestamp: true })
+          return
         }
-      }
+
+        for (const importer of importers) {
+          const [importerPath, importerCode] = importer
+          const [lockFilePath, lockFileSource] = finalAssetsPathMap.get(assetsKey.lock)!
+          const json = JSON.parse(lockFileSource as string)
+          json.packages.brotli.file_name = customURL(
+            assetsKey.brotli,
+            assetsNameMap,
+            finalAssetsPathMap,
+            importer,
+          )
+          json.packages.fonttools.file_name = customURL(
+            assetsKey.fonttools,
+            assetsNameMap,
+            finalAssetsPathMap,
+            importer,
+          )
+          const lockFileFinalPath = path.join(outputDir, lockFilePath)
+          fs.writeFileSync(lockFileFinalPath, JSON.stringify(json))
+          logger.info(`Update lock file: ${lockFileFinalPath}`, { timestamp: true })
+
+          const updatedImporterCode = importerCode
+            .replace(
+              assetsNameMap.get(assetsKey.asmjs)!,
+              customURL(assetsKey.asmjs, assetsNameMap, finalAssetsPathMap, importer),
+            )
+            .replace(
+              assetsNameMap.get(assetsKey.wasm)!,
+              customURL(assetsKey.wasm, assetsNameMap, finalAssetsPathMap, importer),
+            )
+            .replace(
+              assetsNameMap.get(assetsKey.zip)!,
+              customURL(assetsKey.zip, assetsNameMap, finalAssetsPathMap, importer),
+            )
+            .replace(
+              assetsNameMap.get(assetsKey.lock)!,
+              customURL(assetsKey.lock, assetsNameMap, finalAssetsPathMap, importer),
+            )
+
+          fs.writeFileSync(importerPath, updatedImporterCode)
+          logger.info(`Update importer: ${importerPath}`, { timestamp: true })
+        }
+
+        const asmJsPath = finalAssetsPathMap.get(assetsKey.asmjs)![0]
+        if (typeof transformAsmJs === 'function') {
+          const code = fs.readFileSync(asmJsPath, 'utf-8')
+          const updatedCode = transformAsmJs(code)
+          if (updatedCode) {
+            fs.writeFileSync(asmJsPath, updatedCode, 'utf-8')
+          }
+        }
+      },
     },
-  }
+  ]
 }
