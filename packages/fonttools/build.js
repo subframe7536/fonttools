@@ -134,67 +134,36 @@ const asmJsWebPlugin = {
   renderChunk(code, { path }) {
     if (path.endsWith('asm.js')) {
       extraAssetsExports['pyodide.web.asm.js'] = './dist/pyodide.web.asm.js'
+      const trimmedCode = code
+        .replace(/__require\("[^"]+"\)/g, '{}')
+        .replace(/__filename/g, 'undefined')
+        .replace(/require\("[^"]+"\)/g, '{}')
+        .replace(/await import\("node:[^"]+"\)/g, '{}')
+        .replace(/await import\("ws"\)/g, '{}')
+        .replace('typeof Deno < "u"', 'false')
+        .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string"', 'false')
+        .replace('typeof process == "object"', 'false')
+        .replace('throw new Error("Cannot determine runtime environment");', ';')
+        .replace('typeof importScripts == "function" && typeof self == "object", _r = typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false')
+        .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
+        .replace('Module["NODEFS"] = NODEFS;', '')
+        .replace('"NODEFS": NODEFS,', '')
+        .replace(
+          /(\w+\(.*\))\.config\.indexURL/,
+          (_, prefix) => {
+            const [_node, _web] = prefix.split(':').map(s => s.trim())
+            return `${_node} : (${_web}.config.whlURL || ${_web}.config.indexURL)`
+          },
+        )
+        .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
+        .replace(/\s*\w*\(\w+,\s*"NodeReader"\);/, '')
+        .replace(/\s*\w*\(\w+,\s*"NodeWriter"\);/, '')
+        .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}')
+        .replace('Module["IDBFS"] = IDBFS;', '')
+        .replace('"IDBFS": IDBFS,', '')
+
       return {
-        code: code
-          .replace(/__require\("[^"]+"\)/g, '{}')
-          .replace(/__filename/g, 'undefined')
-          .replace(/require\("[^"]+"\)/g, '{}')
-          .replace(/await import\("node:[^"]+"\)/g, '{}')
-          .replace(/await import\("ws"\)/g, '{}')
-          .replace('typeof Deno < "u"', 'false')
-          .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string"', 'false')
-          .replace('typeof process == "object"', 'false')
-          .replace('throw new Error("Cannot determine runtime environment");', ';')
-          .replace('typeof importScripts == "function" && typeof self == "object", _r = typeof navigator == "object" && typeof navigator.userAgent == "string" && navigator.userAgent.indexOf("Chrome") == -1 && navigator.userAgent.indexOf("Safari") > -1', 'false')
-          .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
-          .replace('Module["NODEFS"] = NODEFS;', '')
-          .replace('"NODEFS": NODEFS,', '')
-          .replace(
-            /(\w+\(.*\))\.config\.indexURL/,
-            (_, prefix) => {
-              const [_node, _web] = prefix.split(':').map(s => s.trim())
-              return `${_node} : (${_web}.config.whlURL || ${_web}.config.indexURL)`
-            },
-          )
-          .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
-          .replace(/\s*\w*\(\w+,\s*"NodeReader"\);/, '')
-          .replace(/\s*\w*\(\w+,\s*"NodeWriter"\);/, '')
-          .replace(/\s*\w*\(.*,\s*"loadScript"\);/g, '(false){}')
-          // .replace('Module["ERRNO_MESSAGES"] = ERRNO_MESSAGES;', '')
-          .replace('Module["IDBFS"] = IDBFS;', '')
-          .replace('"IDBFS": IDBFS,', ''),
-        // // SDL:
-        // .replace(/TTF_\w+:\s*_TTF_[^,]*,/g, '')
-        // .replace(/Module\["_TTF_\w+"\]\s*=\s*_TTF_\w+;/g, '')
-        // .replace(/Mix_\w+:\s*_Mix_[^,]*,/g, '')
-        // .replace(/Module\["_Mix_\w+"\]\s*=\s*_Mix_\w+;/g, '')
-        // .replace(/IMG_\w+:\s*_IMG_[^,]*,/g, '')
-        // .replace(/SDL_\w+:\s*_SDL_[^,]*,/g, '')
-        // .replace(/Module\["_*SDL_\w+"\]\s*=\s*_*SDL_\w+;/g, '')
-        // .replace(/_SDL_\w+\.sig\s*=\s*"\w+";/g, '')
-        // .replace(/Module\["_\w*zoomSurface"\]\s*=\s*_\w*zoomSurface;/g, '')
-        // .replace(/_\w*zoomSurface\.sig\s*=\s*"\w+";/g, '')
-        // .replace(/\s\w*zoomSurface:\s*_\w*zoomSurface,*/g, '')
-        // .replace(/Module\["_[^e]+Color"\]\s*=\s*_\w+Color;/g, '')
-        // .replace(/_[^e]+Color\.sig\s*=\s*"\w+";/g, '')
-        // .replace(/\s[^e]+Color:\s*_\w+Color*,/g, '')
-        // .replace(/Module\["_\w+RGBA"\]\s*=\s*_\w+RGBA;/g, '')
-        // .replace(/_\w+RGBA\.sig\s*=\s*"\w+";/g, '')
-        // .replace(/\s\w+RGBA:\s*_\w+RGBA*,/g, '')
-        // .replace('Module["SDL"] = SDL;', '')
-        // .replace(/Module\["_emscripten_SDL_\w+"\]\s*=\s*_emscripten_SDL_\w+;/g, '')
-        // .replace('emscripten_SDL_SetEventHandler: _emscripten_SDL_SetEventHandler,', '')
-        // .replace(/SDL.screen >> 2/g, '0')
-        // .replace(/typeof SDL/g, 'undefined')
-        // .replace('Module["_IMG_Load_RW"] = _IMG_Load_RW;', '')
-        // .replace('_IMG_Load_RW.sig = "ppi";', '')
-        // .replace('Module["_IMG_Load"] = _IMG_Load;', '')
-        // .replace('_IMG_Load.sig = "pp";', '')
-        // .replace(/SDL.translateRGBAToCSSRGBA\([^)]*\)/g, '"#000"')
-        // .replace(/SDL.translateColorToCSSRGBA\([^)]*\)/g, '"#000"')
-        // .replace('Module["setMainLoop"] = setMainLoop;', '')
-        // .replace(/setMainLoop\([^)]*\);/g, '')
-        // .replace(/_emscripten$/m, '')
+        code: trimmedCode,
         map: null,
       }
     }
