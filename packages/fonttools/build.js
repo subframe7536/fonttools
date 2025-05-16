@@ -152,7 +152,13 @@ const asmJsWebPlugin = {
           .replace('typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string" && !process.browser', 'false')
           .replace('Module["NODEFS"] = NODEFS;', '')
           .replace('"NODEFS": NODEFS,', '')
-          .replace('API.config.indexURL', 'API.config.whlURL || API.config.indexURL')
+          .replace(
+            /(\w+\(.*\))\.config\.indexURL/,
+            (_, prefix) => {
+              const [_node, _web] = prefix.split(':').map(s => s.trim())
+              return `${_node} : (${_web}.config.whlURL || ${_web}.config.indexURL)`
+            },
+          )
           .replace(/\s*\w*\(\w+,\s*"node[^"]+"\);/g, '')
           .replace(/\s*\w*\(\w+,\s*"NodeReader"\);/, '')
           .replace(/\s*\w*\(\w+,\s*"NodeWriter"\);/, '')
