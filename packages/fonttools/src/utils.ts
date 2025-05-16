@@ -1,3 +1,4 @@
+import type { LiteralOrString } from '@subframe7536/type-utils'
 import type { PyodideInterface } from 'pyodide'
 
 type ScriptGenerator = (inputPath: string, outputPath: string) => string
@@ -14,31 +15,41 @@ ${script}
 font.save('${output}')`
 }
 
+export type Extension = {
+  input?: LiteralOrString<'ttf' | 'otf' | 'woff' | 'woff2'>
+  output?: LiteralOrString<'ttf' | 'otf' | 'woff' | 'woff2'>
+}
+
 /**
  * Run a Python script in `pyodide` with input ttf and return processed ttf buffer
  * @param pyodide pyodide instance
- * @param inputBuffer original TTF font buffer
+ * @param inputBuffer original font buffer
  * @param script script string, `font` is `fonttools.ttLib.TTFont` variable
+ * @param ext input / output font format. Default input is 'ttf', default output is same as input
  */
-export async function handleFontBuffer(
+export function handleFontBuffer(
   pyodide: PyodideInterface,
-  inputBuffer: Uint8Array,
+  inputBuffer: Uint8Array | ArrayBuffer,
   script: ScriptGenerator,
-): Promise<Uint8Array> {
-  const inputPath = '/tmp/input.ttf'
-  const outputPath = '/tmp/output.ttf'
+  ext: Extension = {},
+): Uint8Array {
+  const { input = 'ttf', output = input } = ext
+  const inputPath = `/tmp/input.${input}`
+  const outputPath = `/tmp/output.${output}`
 
   try {
     pyodide.FS.writeFile(inputPath, inputBuffer)
 
     const pythonCode = script(inputPath, outputPath)
-    await pyodide.runPythonAsync(pythonCode)
+    pyodide.runPython(pythonCode)
 
     const outputBuffer = pyodide.FS.readFile(outputPath)
     return outputBuffer
   } finally {
-    pyodide.FS.unlink(inputPath)
-    pyodide.FS.unlink(outputPath)
+    try {
+      pyodide.FS.unlink(inputPath)
+      pyodide.FS.unlink(outputPath)
+    } catch {}
   }
 }
 
